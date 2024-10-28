@@ -23,35 +23,29 @@
 import sys
 import math
 
-# Constants (WGS-84 Earth)
-a = 6378.137  # Semi-major axis in kilometers (equatorial radius)
-b = 6356.752314245  # Semi-minor axis in kilometers (polar radius)
+# Constants
+R_E_Km = 6378.137  # Semi-major axis in kilometers (equatorial radius)
+E_E    = 0.081819221456
 
 # Function to calculate ray-ellipsoid intersection
 def ray_ellipsoid_intersection(d_l, c_l):
     # Coefficients for the quadratic
-    A = (d_l[0]**2 / a**2) + (d_l[1]**2 / a**2) + (d_l[2]**2 / b**2)
-    B = 2 * ((d_l[0] * c_l[0] / a**2) + (d_l[1] * c_l[1] / a**2) + (d_l[2] * c_l[2] / b**2))
-    C = (c_l[0]**2 / a**2) + (c_l[1]**2 / a**2) + (c_l[2]**2 / b**2) - 1
+    A = d_l_x**2.0+d_l_y**2.0+(d_l_z**2/(1-E_E**2))
+    B = 2.0*(d_l_x*c_l_x+d_l_y*c_l_y+d_l_z*(c_l_z/(1-E_E**2)))
+    C = c_l_x**2+c_l_y**2+(c_l_z**2/(1-E_E**2))-R_E_Km**2
 
     # Solves the quadratic
     discriminant = B**2 - 4 * A * C
-
-    if discriminant < 0:
-        # No intersection case
-        return None
-    
-    # Calculate the two potential solutions for intersection parameter
-    t1 = (-B + math.sqrt(discriminant)) / (2 * A)
-    t2 = (-B - math.sqrt(discriminant)) / (2 * A)
-
-    t = min(t for t in [t1, t2] if t > 0)
+    if discriminant>=0:
+        d=(-B-math.sqrt(discriminant))/(2.0*A)
+    if d<0:
+        d=(-B+math.sqrt(discriminant))/(2.0*A)
 
     # Calculate the intersection point for x, y, z axis
     l_d = [
-        c_l[0] + t * d_l[0],
-        c_l[1] + t * d_l[1],
-        c_l[2] + t * d_l[2],
+        c_l[0] + d * d_l[0],
+        c_l[1] + d * d_l[1],
+        c_l[2] + d * d_l[2],
     ]
 
     return l_d
@@ -75,10 +69,6 @@ c_l = [c_l_x, c_l_y, c_l_z]
 # Calculate the intersection point
 intersection_point = ray_ellipsoid_intersection(d_l, c_l)
 
-# Print the intersection point if it exists
-if intersection_point is not None:
-    print(intersection_point[0])  # x-component of intersection point
-    print(intersection_point[1])  # y-component of intersection point
-    print(intersection_point[2])  # z-component of intersection point
-else:
-    print("No intersection")
+print(intersection_point[0])  # x-component of intersection point
+print(intersection_point[1])  # y-component of intersection point
+print(intersection_point[2])  # z-component of intersection point
